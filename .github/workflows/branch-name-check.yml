@@ -1,0 +1,33 @@
+name: Branch Name Validation
+
+on:
+  push:
+    branches:
+      - '**'    # Trigger on all branch pushes
+  pull_request:
+    branches:
+      - '**'    # Trigger on all PRs
+
+jobs:
+  validate-branch-name:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get the branch name
+        id: get_branch
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "BRANCH_NAME=${GITHUB_HEAD_REF}" >> $GITHUB_ENV
+          else
+            echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+          fi
+
+      - name: Validate branch name
+        run: |
+          PATTERN='^feat\/[0-9]+\/[a-zA-Z0-9\-]+$'
+          if [[ ! "$BRANCH_NAME" =~ $PATTERN ]]; then
+            echo "Branch name '$BRANCH_NAME' does not match the required pattern 'feat/{number}/{text-with-hyphen}'"
+            exit 1
+          else
+            echo "Branch name '$BRANCH_NAME' is valid."
+          fi
